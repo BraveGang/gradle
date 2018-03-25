@@ -111,4 +111,50 @@ class FlameGraphSanitizer {
         }
 
     }
+
+    public static class ChainCollapsingFunction implements SanitizeFunction {
+        private final String start;
+        private final String end;
+
+        private boolean collapsing;
+
+        public ChainCollapsingFunction(String start, String end) {
+            this.start = start;
+            this.end = end;
+        }
+
+        @Override
+        public String map(String entry) {
+            if (collapsing) {
+                if (end.equals(entry)) {
+                    collapsing = false;
+                    return end;
+                } else {
+                    return start;
+                }
+            }
+            if (start.equals(entry)) {
+                collapsing = true;
+                return start;
+            }
+            return entry;
+        }
+    }
+
+    public static class CompositeSanitizeFunction implements SanitizeFunction {
+        private final List<SanitizeFunction> functions;
+
+        public CompositeSanitizeFunction(List<SanitizeFunction> functions) {
+            this.functions = functions;
+        }
+
+        @Override
+        public String map(String entry) {
+            String result = entry;
+            for (SanitizeFunction function : functions) {
+                result = function.map(result);
+            }
+            return result;
+        }
+    }
 }
